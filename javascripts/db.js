@@ -92,3 +92,157 @@ DB.prototype.close=function(){
       })
   }
 }
+
+//SampleCollection
+DB.prototype.sampleCollection=function(coll,numberDocs){
+  //Return promise which either resolved with array of numberDocs from coll collection
+  //Or reject wit err
+  var _this=this;
+  return new Promise(resolve,reject){
+    _this.db.collection(coll, {strict: true}, function(error, collection){
+      if(error){
+        console.log("Could not access colelction: "+error.message);
+        reject(error.message);
+      } else {
+        //Create a cursor from aggregation result.
+        var cursor=collection.aggregate([
+          { $sample: {size: parseInt(numberDocs)}}],
+          {cursor: {batchSize:10}}
+        )
+        //Iterate over cursor to access each doc.
+        cursor.toArray(function(error,docArray){
+          if(error){
+            console.log("Error Reading From cursor: "+error.message);
+            reject(error.message);
+          }else {
+            resolve(docArray);
+          }
+        })
+      }
+    })
+  }
+}
+
+//update collection
+DB.prototype.updateCollection=function(coll,pattern,update){
+  //Return promise that either resolves (passing no of docs that have been updated)\
+  //Or rejected with error 
+  //Pattern is used to match the required docs from the collection.
+  //to which the "update" is applied
+  var _this=this;
+  return new Promise(function(resolve,reject){
+    _this.db.collection(coll,{strict: true}, function(error,collection){
+      if(error){
+        console.log("Could not access collection: "+error.message);
+        reject(error.message);
+      }else {
+        //Setting write concern to 1 ({w:1}) means that we dont wait for
+        //changes to be replicated to any of secondaries.
+        collection.updateMany(pattern, update, {w:1})
+        .then(
+          function(result){
+            resolve(result.result.nModified);
+          },
+          function(err){
+            console.log("UpdateMany Failed: "+err.message);
+            reject(err.message);
+          }
+        )
+      }
+    })
+  })
+}
+//PopCollection
+DB.prototype.popCollection=function(coll,docs){
+  //Takes the passed array of JSON docs and writes them to specified collection.
+  //Returns promise that resolves with number of docs added or rejects with error
+  var _this=this;
+  return new Promise(function(resolve,reject){
+    _this.db.collection(coll, {strict: false}, function(error,collection){
+      if(error){
+        console.log("Could not access collection: "+error.message);
+        reject(error.message);
+      }else {
+        if(!Array.isArray(docs)){
+          console.log("Data is not an array");
+          
+          //Reject promise with new error object
+          reject({"message":"Data is not an array"})
+        } else {
+          //Insert the array of documents
+          
+          //InsertMany updates original array by adding _id's; 
+          //we dont want to change our original array so take a copy.
+          //"JSON.parse" throws exception rather than returning an error
+          //So we need to catch it.
+          try {
+            var _docs=JSON.parse(JSON.stringify(docs));
+          } catch(trap){
+            reject("Array elements are not valid JSON");
+          }
+          
+          collection.insertMany(_docs)
+          .then(function(results){
+            resolve(results.insertedCount);
+          },function(err){
+            console.log("Failed to insert Docs: "+err.message);
+            reject(err.message);
+          })
+        } 
+      }
+    })
+  })
+}
+
+//Add Document
+DB.prototype.addDocument=function(coll,document){
+  //Return promise that either resolves or rejects
+  var _this=this;
+  return new Promise(function(resolve,reject){
+    _this.db.collection(coll, {strict: false}, function(error,collection){
+      if(error){
+        console.log("Could not access collection: "+error.message);
+        reject(error.message);
+      }else {
+        collection.insert(document, {w: "majority"})
+        .then(
+          function(result){
+            resolve();
+          },
+          function(err){
+            console.log("Insert failed: "+err.message);
+            reject(err.message);
+          }
+        )
+      }
+    })
+  })
+}
+
+//MostRecentDocument
+DB.prototype.mostRecentDocument=function(coll){
+  //return promise that either resolves most recent document
+  //from collection based on reverse sort on _id or reject
+  var _this=this;
+  return new Promise(function(resolve,reject){
+    _this.db.collection(coll, {strict: false}, function(error,collection){
+      if(error){
+        console.log("Could not access collection: "+error.message);
+        reject(error.message);
+      }else {
+        var cursor=collection.find({}).sort({_id:1}).limit(1);
+        cursor.toArray(function(error,docArray){
+          if(error){
+            console.log("Error reading from cursor: "+error.message);
+            reject(error.message);
+          }else {
+            resolve(docArray[0]);
+          }
+        })
+      }
+    })
+  })
+}
+
+//Export it
+module.exports=DB;
