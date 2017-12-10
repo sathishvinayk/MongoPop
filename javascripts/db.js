@@ -47,3 +47,48 @@ DB.prototype.connect=function(uri){
     }
   })
 }
+
+//Count the number of docs in collection
+//Note collection method on db doesn't support promises, so cb is provided
+DB.prototype.countDocuments=function(coll){
+  //Returns a promise which resolves to no of docs in specified collection
+  var _this=this;
+  
+  return new Promise(function(resolve,reject){
+    //{strict: true}means count operation will fail if collection doesn't exist
+    _this.db.collection(coll, {strict: true},function(error, collection){
+      if(error){
+        console.log("Could not access collection: "+error.message);
+        reject(error.message);
+      }else {
+        collection.count()
+        .then(
+            function(count){
+              //Resolve promise with count
+              resolve(count);
+            },
+            function(err){
+              console.log("countDocuments failed: "+err.message);
+              //Reject with error
+              reject(err.message);
+          }
+        )
+      }
+    });
+  })
+}
+//Close the connection after counting the docs.
+DB.prototype.close=function(){
+  //Close db conn. If conn isn't open then just ignore.
+  //If closing a conn fails then log the fact but then move on.
+  //This method returns nothing, so caller can fire and forget
+  
+  if(this.db){
+    this.db.close()
+      .then(
+        function(){},
+        function(error){
+          console.log("Failed to close Db: "+error.message);
+      })
+  }
+}
