@@ -8,11 +8,11 @@ function DB(){
 //Connnect function
 DB.prototype.connect=function(uri){
   //Connect to db specified by connect string.
-  
+
   //trick to cope with fact that this will refer to a different
   //obj once in promise's function.
   var _this=this;
-  
+
   //This method returns a js promise
   return new Promise(function(resolve,reject){
     if(_this.db){
@@ -20,7 +20,7 @@ DB.prototype.connect=function(uri){
       resolve();
     }else {
       var __this=_this;
-      
+
       //Many methods in MongoDB driver will return promise.
       //If caller doesn't pass a cb function
       MongoClient.connect(uri)
@@ -30,11 +30,11 @@ DB.prototype.connect=function(uri){
         //is called if promise is resolved. The "connect"
         //method returns new db connection which code in this function
         //sees as "database" parameter
-        
+
         //store database connection as part of DB obj so that it can be
         //used for subsequent method calls
         __this.db=database;
-        
+
         //Send back request got completed to caller. No parameters are passed back.
         resolve();
       },
@@ -53,7 +53,7 @@ DB.prototype.connect=function(uri){
 DB.prototype.countDocuments=function(coll){
   //Returns a promise which resolves to no of docs in specified collection
   var _this=this;
-  
+
   return new Promise(function(resolve,reject){
     //{strict: true}means count operation will fail if collection doesn't exist
     _this.db.collection(coll, {strict: true},function(error, collection){
@@ -82,7 +82,7 @@ DB.prototype.close=function(){
   //Close db conn. If conn isn't open then just ignore.
   //If closing a conn fails then log the fact but then move on.
   //This method returns nothing, so caller can fire and forget
-  
+
   if(this.db){
     this.db.close()
       .then(
@@ -107,7 +107,7 @@ DB.prototype.sampleCollection=function(coll,numberDocs){
         //Create a cursor from aggregation result.
         var cursor=collection.aggregate([
           { $sample: {size: parseInt(numberDocs)}}],
-          {cursor: {batchSize:10}}
+          { cursor: {batchSize:10}}
         )
         //Iterate over cursor to access each doc.
         cursor.toArray(function(error,docArray){
@@ -126,7 +126,7 @@ DB.prototype.sampleCollection=function(coll,numberDocs){
 //update collection
 DB.prototype.updateCollection=function(coll,pattern,update){
   //Return promise that either resolves (passing no of docs that have been updated)\
-  //Or rejected with error 
+  //Or rejected with error
   //Pattern is used to match the required docs from the collection.
   //to which the "update" is applied
   var _this=this;
@@ -165,13 +165,13 @@ DB.prototype.popCollection=function(coll,docs){
       }else {
         if(!Array.isArray(docs)){
           console.log("Data is not an array");
-          
+
           //Reject promise with new error object
           reject({"message":"Data is not an array"})
         } else {
           //Insert the array of documents
-          
-          //InsertMany updates original array by adding _id's; 
+
+          //InsertMany updates original array by adding _id's;
           //we dont want to change our original array so take a copy.
           //"JSON.parse" throws exception rather than returning an error
           //So we need to catch it.
@@ -180,7 +180,7 @@ DB.prototype.popCollection=function(coll,docs){
           } catch(trap){
             reject("Array elements are not valid JSON");
           }
-          
+
           collection.insertMany(_docs)
           .then(function(results){
             resolve(results.insertedCount);
@@ -188,7 +188,7 @@ DB.prototype.popCollection=function(coll,docs){
             console.log("Failed to insert Docs: "+err.message);
             reject(err.message);
           })
-        } 
+        }
       }
     })
   })
