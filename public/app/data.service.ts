@@ -21,18 +21,108 @@ export class DataService {
   constructor (private http: Http){
 
   }
+  // fetchServerIP
   fetchServerIP(): Observable<string>{
     return this.http.get(this.baseURL + "ip")
       .map(response=>response.json().ip)
       .catch((error:any)=>Observable.throw(error.json().error || 'Server error'))
   }
 
+  //fetchClientConfig
   fetchClientConfig(): Observable<ClientConfig> {
     return this.http.get(this.baseURL + "config")
     .map(response=>response.json())
     .catch((error:any)=>Observable.throw(error.json().error || 'Server error'))
   }
+  // setMongoDBURI
   setMongoDBURI(MongoDBURI: string){
     this.MongoDBURI=MongoDBURI;
   }
+
+  //tryParseJSON
+  tryParseJSON(jsonString: string): Object {
+    /* Attempts to build an object from supplied string. Raises an error
+    //if conversion failed
+    */
+    try {
+      let myObject=JSON.parse(jsonString);
+      if(myObject && typeof myObject === "object"){
+        return myObject;
+      }
+    }
+    catch(error){
+      let errorString = "Not valid JSON: "+error.message;
+      console.log(errorString);
+      new Error(errorString);
+    }
+    return {};
+  }
+
+  // sendUpdateDocs
+  sendUpdateDocs(doc: UpdateDocsRequest):Observable<MongoResult>{
+    var headers = new Headers({'Content-Type': 'application/json'});
+    var options = new RequestOptions({headers: headers});
+    var url: string = this.baseURL + "updateDocs";
+
+    return this.http.post(url, doc, options)
+      .timeout(36000000, new Error('Timeout exceeded'))
+      .map(response => response.json())
+      .catch((error:any)=>{
+        return Observable.throw(error.toString() || 'Server error')
+      });
+  };
+
+  //UpdateDocs
+  updateDBDocs(collName: string, matchPattern: string, dataChange: string,
+        threads: number): Observable<MongoResult> {
+
+    let matchObject: Object;
+    let changeObject: Object;
+
+    try {
+      matchObject = this.tryParseJSON(matchPattern);
+    }
+    catch(error){
+      let errorString = "Match pattern: "+error.message;
+      console.log(errorString);
+      return Observable.throw(errorString);
+    }
+
+    try {
+      matchObject = this.tryParseJSON(dataChange);
+    }
+    catch(error){
+      let errorString = "Data change: "+error.message;
+      console.log(errorString);
+      return Observable.throw(errorString);
+    }
+
+    let updateDocsRequest = new UpdateDocsRequest(this.MongoDBURI, collName, matchObject, changeObject, threads);
+    return this.sendUpdateDocs(updateDocsRequest)
+    .map(results=> {return results})
+    .catch((error:any)=> {
+      return Observable.throw(error.toString() || 'Server error')
+    })
+  }
+
+  // SendCount Docs
+  sendCountDocs(CollName: string): Observable<MongoResult> {
+    /*Use Mongopop api to count no of docs in specified collection
+    // It returns an Observable that delivers object of type MongoResult
+    */
+    //need to indicate request parameters will be in the performed
+    //of json document
+    var headers = new Headers({'Content-Type': 'application/json'});
+    var options = new RequestOptions({headers: headers});
+
+    var countDocsRequest = new CountDocsRequest(this.MongoDBURI, CollName);
+    let url: string = this.baseURL+ "countDocs";
+
+    return this.http.post(url, countDocsRequest, options)
+    .timeout(360000, new Error('Timeout exceeded'))
+    .map(response=>response.json())
+    .catch((error:any)=>{
+      return Observable.throw(error.toString() || 'Server error')
+    });
+  };
 }
