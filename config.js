@@ -9,7 +9,7 @@ var config={
     mockarooUrl: "http://www.mockaroo.com/536ecbc0/download?count=1000&key=48da1ee0"
   },
   makerMongoDBURI: "mongodb://localhost:27017/maker?authSource=admin",
-  checkinCollection: "foursq"
+  checkInCollection: "foursq"
 };
 
 module.exports=config;
