@@ -125,4 +125,40 @@ export class DataService {
       return Observable.throw(error.toString() || 'Server error')
     });
   };
+  // SendAdddoc Api
+  sendAddDoc(CollName: string, DocURL: string, DocCount:number,
+      Unique: boolean): Observable<MongoResult> {
+    /*
+      Docs are fetched from service such as Mockaroo using DocUrl
+    */
+    let headers = new Headers({'Content-Type': 'application/json'});
+    let options = new RequestOptions({headers: headers});
+    let addDocsRequest = new AddDocsRequest(this.MongoDBURI, CollName, DocURL, DocCount, Unique);
+    let url: string = this.baseURL + "addDocs";
+
+    return this.http.post(url, addDocsRequest, options)
+    .timeout(3600000, new Error('Timeout exceeded'))
+    .map(response=>response.json())
+    .catch((error:any)=>{
+      return Observable.throw(error.toString()||'server error')
+    });
+  };
+
+  // SendSSampleDoc Api
+  SendSampleDoc(CollName: string, NumberDocs: number): Observable<MongoReadResult>{
+    /*
+      Use Mongopop api to request a sample of docs from collection
+    */
+    let headers = new Headers({'Content-Type': 'application/json'});
+    let options = new RequestOptions({headers: headers});
+    let sampleDocsRequest = new SampleDocsRequest(this.MongoDBURI, CollName,NumberDocs);
+    let url:string = this.baseURL + "sampleDocs";
+
+    return this.http.post(url, sampleDocsRequest, options)
+    .timeout(36000000, new Error('Timeout exceeded'))
+    .map(response=>response.json())
+    .catch((error:any)=>{
+      return Observable.throw(error.toString() || 'Server error')
+    });
+  };
 }
