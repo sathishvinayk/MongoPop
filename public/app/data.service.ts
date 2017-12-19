@@ -145,7 +145,7 @@ export class DataService {
   };
 
   // SendSSampleDoc Api
-  SendSampleDoc(CollName: string, NumberDocs: number): Observable<MongoReadResult>{
+  sendSampleDoc(CollName: string, NumberDocs: number): Observable<MongoReadResult>{
     /*
       Use Mongopop api to request a sample of docs from collection
     */
