@@ -38,6 +38,39 @@ export class DataService {
   setMongoDBURI(MongoDBURI: string){
     this.MongoDBURI=MongoDBURI;
   }
+  // calculateMongoDBURI
+  calculateMongoDBURI(dbInputs: any): { "MongoDBURI": string, "MongoDBURIRedacted":string}
+  {
+    /*
+      Returns uri for accessing db; if its for atlas use the password
+      and use the chosen db name rather than 'admin'. Also returns the redacted URI
+    */
+    let MongoDBURI: string;
+    let MongoDBURIRedacted: string;
+
+    if(dbInputs.MongoDBBaseURI == 'mongodb://localhost:27017'){
+      MongoDBURI = dbInputs.MongoDBBaseURI
+        + "/" + dbInputs.MongoDBDatabaseName
+        + "?authSource=admin&socketTimeoutMS="
+        + dbInputs.MongoDBSocketTimeout*1000
+        + "&maxPoolSize="
+        + dbInputs.MongoDBConnectionPoolSize;
+      MongoDBURIRedacted = dbInputs.MongoDBBaseURI;
+    }else {
+      dbInputs.MongoDBUser =dbInputs.MongoDBBaseURI.split('mongodb://')[1].split(':')[0];
+      MongoDBURI = dbInputs.MongoDBBaseURI
+        .replace('<DATABASE>', dbInputs.MongoDBDatabaseName)
+        .replace('<PASSWORD', dbInputs.MongoDBUserPassword)
+        + "&socketTimeoutMS="
+        + dbInputs.MongoDBSocketTimeout*1000
+        + "&maxPoolSize="
+        + dbInputs.MongoDBConnectionPoolSize;
+    }
+    this.setMongoDBURI(MongoDBURI);
+    return ({"MongoDBURI": MongoDBURI,
+      "MongoDBURIRedacted": MongoDBURIRedacted
+    });
+  }
 
   //tryParseJSON
   tryParseJSON(jsonString: string): Object {

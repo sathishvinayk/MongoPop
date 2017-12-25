@@ -1,0 +1,78 @@
+<!--
+html template for the main component (AppComponent) of the Mongopop client app.
+Collects MongoDB connection information from the user and then passes it to the
+sub-components.
+-->
+<h1>Welcome to MongoPop</h1>
+  <div>
+    <p>
+      The Ip address of server running mongopop is {{serverIP}}, if using
+        <a href="https://cloud.mongodb.com" name="MongoDB Atlas"</a>,
+          Please make sure you've added this to your Ip whitelisted unless you have
+          VPC peering configured.
+    </p>
+  </div>
+  <div>
+    <p>
+      Connect String provided by MongoDB Atlas:
+      <input #MongoDBBaseString id="MongoDB-base-string" value="{{dbInputs.MongoDBBaseURI}}"
+          (keyup)="setBaseURI(MongoDBBaseString.value)" (change)="setBaseURI(MongoDBBaseString.value)" />
+    </p>
+    <!-- Only ask for password if mongodb uri has been changed from localhost-->
+    <div *ngIf="dbInputs.MongoDBUser">
+      <p>
+        <input #MongoDBPassword id="MongoDB-password" value="{{dbInputs.MongoDBUserPassword}}" type="password"
+          (keyup)="setPassword(MongoDBPassword.value)" change="setPassword(MongoDBPassword.value)" />
+      </p>
+    </div>
+    <p>Preferred DB name:
+      <input #MongoDBDBName id="MongoDB-db-name" value="{{dbInputs.MongoDBDatabaseName}}"
+          (keyup)="setDBName(MongoDBDBName.value)" (change)="setDBName(MongoDBDBName.value)" />
+    <p>
+      Socket (operation) timeout in seconds:
+      <input #socketTimeout id="socket-timeout" value="{{dbInputs.MongoDBSocketTimeout}}" type="number"
+          min="1" max="1000" (change)="setMongoDBSocketTimeout(MongoDBSocketTimeout.value)" />
+    <p>
+    <p>
+      Connection Pool Size:
+      <input #ConnectionPoolSize id="connection-pool-size" value="{{dbInputs.MongoDBConnectionPoolSize}}" type="number"
+          min="1" max="1000" (change)="setMongodbConnectionPoolSize(ConnectionPoolSize.value)" />
+    </p>
+    <p>
+      MongoDB URI: {{dBURI.MongoDBURIRedacted}}
+      <button (click)="showPassword(true)">Show Password</button>
+    </p>
+    <div>
+      <my-add
+          [dataService]="dataService"
+          [MongoDBCollectionName]="MongoDBCollectionName"
+          [MockarooURL]="defaultMockarooURI"
+          (onCollection)="onCollection($event)">
+      </my-add>
+    </div>
+    <div>
+      <my-count
+          [dataService]="dataService"
+          [MongoDBCollectionName]="MongoDBCollectionName"
+          (onCollection)="onCollection($event)"/>
+      </my-count>
+    </div>
+    <!--
+    Only display the updatecomponent if user has already fetched sample docs
+    (so that they know what they can filter on and update)
+    -->
+    <div *ngIf="DataToPlayWith">
+      <my-update
+        [dataService]="dataService"
+        [MongoDBCollectionName]="MongoDBCollectionName"
+        (onSample)="onSample($event)"
+        (onCollection)="onCollection($event)">
+      </my-update>
+      <my-sample
+        [dataService]="dataService"
+        [MongoDBCollectionName]="MongoDBCollectionName"
+        (onSample)="onSample($event)"
+        (onCollection)="onCollection($event)">
+      </my-sample>
+    </div>
+  </div>

@@ -21,7 +21,7 @@ export class CountComponent implements OnInit {
   @Input() dataService: DataService;
   @Input() MongoDBCollectionName: string;
 
-  @output() onCollection = new EventEmitter<string>();
+  @Output() onCollection = new EventEmitter<string>();
 
   ngOnInit(){
 
