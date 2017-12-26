@@ -184,7 +184,7 @@ export class DataService {
     */
     let headers = new Headers({'Content-Type': 'application/json'});
     let options = new RequestOptions({headers: headers});
-    let sampleDocsRequest = new SampleDocsRequest(this.MongoDBURI, CollName,NumberDocs);
+    let sampleDocsRequest = new SampleDocsRequest(this.MongoDBURI, CollName, NumberDocs);
     let url:string = this.baseURL + "sampleDocs";
 
     return this.http.post(url, sampleDocsRequest, options)
